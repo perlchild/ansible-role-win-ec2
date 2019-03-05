@@ -1,5 +1,0 @@
-- hosts: localhost
-  vars:
-    win_ec2_name_prefix: demo
-  roles:
-    - role: perlchild.win-ec2
