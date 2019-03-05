@@ -1,3 +1,49 @@
 <powershell>
-iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1'))
+Set-DefaultAWSRegion -Region ca-central-1
+Set-Variable -name InstanceId -value (Invoke-Restmethod -uri http://169.254.169.254/latest/meta-data/instance-id)
+Set-Variable -name HostName   -value (Invoke-Restmethod -uri http://169.254.169.254/latest/meta-data/hostname)
+$ComputerName = $HostName.Substring(3, $HostName.indexOf('.')-3)
+
+if ($env:computername -eq $ComputerName) {
+    exit 0
+}
+
+
+winrm quickconfig -q
+winrm set winrm/config/winrs '@{MaxMemoryPerShellMB="300"}'
+winrm set winrm/config '@{MaxTimeoutms="1800000"}'
+winrm set winrm/config/service/auth '@{Basic="true"}'
+
+$SourceStoreScope = 'LocalMachine'
+$SourceStorename = 'Remote Desktop'
+
+$SourceStore = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Store -ArgumentList $SourceStorename, $SourceStoreScope
+$SourceStore.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadOnly)
+
+$cert = $SourceStore.Certificates | Where-Object -FilterScript {
+    $_.subject -like '*'
+}
+
+$DestStoreScope = 'LocalMachine'
+$DestStoreName = 'My'
+
+$DestStore = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Store -ArgumentList $DestStoreName, $DestStoreScope
+$DestStore.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+$DestStore.Add($cert)
+
+$SourceStore.Close()
+$DestStore.Close()
+
+winrm create winrm/config/listener?Address=*+Transport=HTTPS `@`{CertificateThumbprint=`"($cert.Thumbprint)`"`}
+
+Restart-Service winrm
+
+netsh advfirewall firewall add rule name="WINRM5986" dir=in action=allow remoteip=any localport=5986 protocol=tcp
+netsh advfirewall firewall add rule name="SMB445" dir=in action=allow remoteip=any localport=445 protocol=tcp
+
+# Wait for Salt Minion installation
+sleep 120
+Rename-Computer -NewName $ComputerName -force
+exit 3010
 </powershell>
+
