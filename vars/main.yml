@@ -16,11 +16,19 @@ win_ec2_default_security_group_rules:
   - proto: tcp
     from_port: 3389
     to_port: 3389
-    cidr_ip: 0.0.0.0/0
+    cidr_ip: 10.0.0.0/8
   - proto: tcp
-    from_port: 5986
+    from_port: 5985
     to_port: 5986
     cidr_ip: 0.0.0.0/0
+  - proto: tcp
+    from_port: 3389
+    to_port: 3389
+    cidr_ip: 172.16.0.0/12
+  - proto: tcp
+    from_port: 3389
+    to_port: 3389
+    cidr_ip: 173.241.44.0/22
 
 win_ec2_security_group: 'WindowsBase'
 win_ec2_security_group_description: 'Security group for Ansible WinRM'
@@ -28,12 +36,14 @@ win_ec2_security_group_rules: '{{win_ec2_default_security_group_rules}}'
 win_ec2_key_name: 'ericr@rp-yul-d1039'
 win_ec2_public_key_path: '~/.ssh/id_rsa.pub'
 win_ec2_private_key_path: '~/.ssh/id_rsa'
-win_ec2_name_prefix: 'win-ec2'
+win_ec2_name_prefix: 'ansiblenode'
+win_ec2_instance_type: 't2.medium'
 win_ec2_images: '{{win_ec2_default_images[win_ec2_region]}}'
 win_ec2_winrm_port: '{{win_ec2_default_winrm_port}}'
 win_ec2_winrm_user: '{{win_ec2_default_winrm_user}}'
-win_ec2_inventory_dest: '{{playbook_dir}}/inventory.win-ec2'
+win_ec2_inventory_dest: '{{playbook_dir}}/ansible.vault'
 win_ec2_wait_for: true
 win_ec2_wait_for_delay: 5
 win_ec2_wait_for_timeout: 300
 win_ec2_password_wait_timeout: 300
+win_ec2_vpc_subnet_id: 'subnet-6d618304'

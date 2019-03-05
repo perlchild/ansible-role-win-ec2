@@ -110,9 +110,3 @@
   with_items: '{{win_ec2_passwords.results}}'
   when: 'win_ec2_images and "create" in win_ec2_action and win_ec2_passwords is defined'
 
-- name: generate static inventory file for win ec2 instance(s)
-  template:
-    src: win_inventory.j2
-    dest: '{{win_ec2_inventory_dest}}'
-    mode: '0644'
-  when: 'win_ec2_images and "create" in win_ec2_action and win_ec2_passwords is defined and win_ec2_inventory_dest'
